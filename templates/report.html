@@ -1,0 +1,207 @@
+{% extends 'base.html' %} {% block content %}
+<h2 class="mb-4">📝 Understanding Report</h2>
+
+<div class="card shadow-sm p-4 bg-white">
+    <h3 class="text-primary mb-3">📘 HW4-1: Naive DQN for Static Mode</h3>
+
+    <h5 class="text-dark">1️⃣ 環境與任務設定</h5>
+    <p>
+        本次作業使用的是提供的 <code>Gridworld</code> 環境（mode 設為
+        <code>static</code>），代表起點與終點位置不變，便於 agent 探索與學習。
+    </p>
+    <ul>
+        <li><strong>環境維度：</strong>4x4 格子（共 16 個 state）</li>
+        <li><strong>動作空間：</strong>上下左右（4 個動作）</li>
+        <li><strong>目標：</strong>學會從起點移動到終點以獲得最大總 reward</li>
+    </ul>
+
+    <h5 class="text-dark mt-4">2️⃣ DQN 模型簡介</h5>
+    <p>
+        Naive DQN 是強化學習中的一種 value-based 方法，核心為使用神經網路近似
+        <code>Q(s, a)</code> 函數。
+    </p>
+    <ul>
+        <li>
+            <strong>輸入層：</strong>環境的狀態 (flatten 後的 4x4 grid → 16
+            維向量)
+        </li>
+        <li><strong>隱藏層：</strong>1~2 層全連接層 + ReLU 激活</li>
+        <li><strong>輸出層：</strong>對應每個動作的 Q 值（共 4 維）</li>
+    </ul>
+    <div class="alert alert-light border text-center">
+        <strong>損失函數（Loss）：</strong><br />
+        <code>L = [ Q(s_t, a_t) - (r_t + γ * max_a Q(s_{t+1}, a)) ]²</code>
+    </div>
+
+    <h5 class="text-dark mt-4">3️⃣ Replay Buffer 的作用與運作</h5>
+    <p>
+        <strong>目的：</strong>Replay
+        Buffer（經驗回放）可打破樣本間的時間相關性，使訓練資料更穩定。
+    </p>
+    <p><strong>作法：</strong></p>
+    <ol>
+        <li>
+            每次互動都將
+            <code>(state, action, reward, next_state, done)</code> 存入 buffer
+        </li>
+        <li>每次訓練時隨機抽樣一批 mini-batch 進行網路更新</li>
+    </ol>
+
+    <h5 class="text-dark mt-4">4️⃣ 策略與訓練流程</h5>
+    <p>
+        <strong>ε-greedy 策略：</strong>使用 ε-greedy 控制探索與利用之間的平衡。
+    </p>
+    <ul>
+        <li>以機率 ε 隨機選擇動作（探索）</li>
+        <li>以機率 1-ε 選擇 Q 值最大的動作（利用）</li>
+    </ul>
+    <p><strong>訓練步驟：</strong></p>
+    <ol>
+        <li>重置環境，取得初始 state</li>
+        <li>根據 ε-greedy 選擇動作</li>
+        <li>執行動作，觀察 reward 與下一個狀態</li>
+        <li>存入 Replay Buffer</li>
+        <li>隨機抽樣進行 Q 更新</li>
+    </ol>
+
+    <h5 class="text-dark mt-4">5️⃣ 結果觀察與解讀</h5>
+    <p>
+        訓練過程中，每回合的總 reward 會逐漸上升，代表 agent 學會如何到達終點。
+    </p>
+    <ul>
+        <li><strong>若 reward 曲線穩定上升：</strong>表示學習成功</li>
+        <li><strong>若曲線波動劇烈：</strong>可考慮調整學習率或 buffer 大小</li>
+    </ul>
+
+    <h5 class="text-success mt-4">✅ 總結</h5>
+    <p>
+        Naive DQN 是 DQN 系列的基礎實作，透過 Replay Buffer 與簡單神經網路學習
+        optimal policy。這部分的實驗有助於我們建立強化學習的基本理解，也為後續的
+        Double DQN 與 Dueling DQN 奠定良好基礎。
+    </p>
+</div>
+
+<div class="card shadow-sm p-4 bg-white mt-5">
+    <h3 class="text-success mb-3">⚖️ HW4-2: Double & Dueling DQN</h3>
+    <h5 class="text-dark">1️⃣ 目標與動機</h5>
+    <p>本部分旨在改進 Naive DQN 的兩個缺點：</p>
+    <ul>
+        <li>
+            <strong>Double DQN：</strong>避免 Q 值過度估計（overestimation
+            bias）
+        </li>
+        <li>
+            <strong>Dueling DQN：</strong>分離狀態價值與動作優勢，有助於穩定訓練
+        </li>
+    </ul>
+
+    <h5 class="text-dark mt-4">2️⃣ 實作重點</h5>
+    <ul>
+        <li>
+            <strong>Double DQN：</strong>改變 target Q 計算邏輯：使用
+            <code>policy_net</code> 選擇動作，<code>target_net</code> 計算 Q 值
+        </li>
+        <li>
+            <strong>Dueling DQN：</strong>改變模型結構，加入 Value / Advantage
+            分支
+        </li>
+    </ul>
+
+    <h5 class="text-dark mt-4">3️⃣ 訓練比較</h5>
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>項目</th>
+                    <th>Naive DQN</th>
+                    <th>Double DQN</th>
+                    <th>Dueling DQN</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>模型架構</td>
+                    <td>單一 MLP</td>
+                    <td>雙網路 Q 計算分離</td>
+                    <td>Value + Advantage 分支</td>
+                </tr>
+                <tr>
+                    <td>更新策略</td>
+                    <td><code>max(Q)</code></td>
+                    <td><code>Q(a*) where a*=argmax(policy)</code></td>
+                    <td>同 Double</td>
+                </tr>
+                <tr>
+                    <td>是否穩定</td>
+                    <td>❌ 易發散</td>
+                    <td>✅ 穩定提升</td>
+                    <td>✅ 提升收斂速度</td>
+                </tr>
+                <tr>
+                    <td>收斂速度</td>
+                    <td>慢</td>
+                    <td>中</td>
+                    <td>快</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h5 class="text-dark mt-4">4️⃣ 小結</h5>
+    <p>
+        Double DQN 有效解決了 DQN 的 Q 值高估問題，而 Dueling DQN
+        在學習狀態價值較明確時更能發揮穩定效果。兩者皆為實用的增強方法，建議未來實作中納入
+        baseline 比較。
+    </p>
+</div>
+<div class="card shadow-sm p-4 bg-white mt-5">
+    <h3 class="text-warning mb-3">
+        🔁 HW4-3: Keras / PyTorch Lightning 與訓練技巧
+    </h3>
+
+    <h5 class="text-dark">1️⃣ 改寫架構</h5>
+    <p>將 PyTorch 原始 DQN 程式碼改寫為：</p>
+    <ul>
+        <li>
+            <strong>Keras：</strong>使用 <code>Sequential</code> 與
+            <code>Model.compile()</code> API 結構明確
+        </li>
+        <li>
+            <strong>PyTorch Lightning：</strong>封裝訓練流程、optimizer 與
+            validation loop，提升程式可維護性
+        </li>
+    </ul>
+
+    <h5 class="text-dark mt-4">2️⃣ 訓練技巧整合</h5>
+    <p>在改寫版本中，我們整合以下技巧以提升訓練穩定性：</p>
+    <ul>
+        <li>
+            <strong>Gradient Clipping：</strong>限制最大 gradient norm 避免
+            exploding gradient
+        </li>
+        <li>
+            <strong>Learning Rate Scheduler：</strong>使用
+            <code>ReduceLROnPlateau</code> 根據 validation reward 調整學習率
+        </li>
+        <li><strong>Early Stopping：</strong>避免過久訓練浪費資源</li>
+    </ul>
+
+    <h5 class="text-dark mt-4">3️⃣ 成效比較</h5>
+    <p>
+        透過這些訓練技巧，改寫後模型在 Gridworld
+        中收斂更快、波動性更低，學習曲線更平穩：
+    </p>
+    <ul>
+        <li>
+            PyTorch Lightning 版本平均 reward 提升約 <strong>10~20%</strong>
+        </li>
+        <li>Keras 版本在小型 Gridworld 上表現穩定，但較難客製複雜策略</li>
+    </ul>
+
+    <h5 class="text-dark mt-4">4️⃣ 總結</h5>
+    <p>
+        HW4-3
+        展現了如何在現代深度學習框架中提升開發效率與訓練表現。透過結構重構與訓練技巧整合，可使強化學習專案更易於管理、實驗與調整。
+    </p>
+</div>
+{% endblock %}

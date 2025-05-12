@@ -1,0 +1,90 @@
+{% extends 'base.html' %} {% block content %}
+<h2 class="mb-4">📈 Reward 曲線比較</h2>
+<p class="text-muted">以下展示各種 DQN 模型訓練過程中的 reward 收斂情況。</p>
+
+<!-- 互動式圖表區 -->
+<h3 class="mt-5">🧭 互動式 Reward 曲線（Plotly）</h3>
+<div class="d-flex flex-wrap gap-4 mb-3"></div>
+<div id="reward-plot" style="height: 500px"></div>
+
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script>
+    async function loadReward(model) {
+        const res = await fetch(`/api/rewards/${model}`);
+        if (!res.ok) return null;
+        return res.json();
+    }
+
+    Promise.all([
+        loadReward("naive"),
+        loadReward("double"),
+        loadReward("dueling"),
+        loadReward("lightning"),
+    ]).then(([naive, double, dueling, lightning]) => {
+        const traces = [];
+        if (naive)
+            traces.push({
+                y: naive,
+                type: "scatter",
+                mode: "lines",
+                name: "Naive DQN",
+            });
+        if (double)
+            traces.push({
+                y: double,
+                type: "scatter",
+                mode: "lines",
+                name: "Double DQN",
+            });
+        if (dueling)
+            traces.push({
+                y: dueling,
+                type: "scatter",
+                mode: "lines",
+                name: "Dueling DQN",
+            });
+        if (lightning)
+            traces.push({
+                y: lightning,
+                type: "scatter",
+                mode: "lines",
+                name: "Lightning DQN",
+            });
+
+        const allTraces = traces;
+        let currentView = allTraces;
+
+        function updatePlot() {
+            const filtered = allTraces;
+            const yscale = "linear";
+            Plotly.react("reward-plot", filtered, {
+                title: "Reward Curves (Interactive)",
+                xaxis: {
+                    title: "Episode",
+                    rangeselector: {
+                        buttons: [
+                            {
+                                count: 50,
+                                label: "50",
+                                step: "x",
+                                stepmode: "backward",
+                            },
+                            {
+                                count: 100,
+                                label: "100",
+                                step: "x",
+                                stepmode: "backward",
+                            },
+                            { step: "all", label: "All" },
+                        ],
+                    },
+                    rangeslider: { visible: true },
+                },
+                yaxis: { title: "Total Reward", type: yscale },
+            });
+        }
+
+        updatePlot();
+    });
+</script>
+{% endblock %}
