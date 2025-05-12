@@ -1,0 +1,6 @@
+flask
+matplotlib
+plotly
+torch
+pytorch-lightning
+numpy
