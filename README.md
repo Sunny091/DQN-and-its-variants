@@ -99,13 +99,6 @@ Visit: [http://localhost:5000](http://localhost:5000)
 
 ---
 
-## 📷 Screenshots
-
--   📊 `/results`: Reward curves with zoom, pan, log scale toggle
--   🧠 `/report`: Architecture comparisons and loss formula
-
----
-
 ## 📌 Notes
 
 -   Data files are loaded dynamically – missing reward JSONs will silently fail
